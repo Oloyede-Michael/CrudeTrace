@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { useContract } from '../hooks/useContract';
 
 import { Card, CardHeader, CardTitle, CardContent, Alert } from '../components/UI';
-import { ShieldAlert, DollarSign, Database, AlertCircle } from 'lucide-react';
+import { ShieldAlert, DollarSign, Database, AlertCircle, Search } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export const Dashboard = () => {
@@ -13,6 +13,9 @@ export const Dashboard = () => {
   const [totalBatches, setTotalBatches] = useState(0);
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [allBatches, setAllBatches] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -26,18 +29,43 @@ export const Dashboard = () => {
         console.error("Failed to fetch treasury bal:", err);
       }
       
-      // We assume there's a limit or we can try fetching batches 1-5 for the chart
-      // In a real app we might track batch count via a counter variable in the contract, 
-      // but assuming we guess there are some initial batches created.
-      const mockData = [
-        { name: 'Batch 1', loaded: 1000, delivered: 990 },
-        { name: 'Batch 2', loaded: 2000, delivered: 1950 },
-        { name: 'Batch 3', loaded: 1500, delivered: 1500 },
-        { name: 'Batch 4', loaded: 3000, delivered: 2800 },
-        { name: 'Batch 5', loaded: 1200, delivered: 1200 },
-      ];
-      setChartData(mockData);
-      setTotalBatches(5);
+      try {
+        setIsLoading(true);
+        // Query the blockchain for all BatchExtracted events to get precise Batch IDs
+        const filter = crudeTrace.filters.BatchExtracted();
+        const events = await crudeTrace.queryFilter(filter);
+        
+        // Extract unique IDs, converting to number
+        const uniqueIds = Array.from(new Set(events.map((e: any) => Number(e.args[0]))));
+        
+        // Fetch full batch struct data for those specific IDs
+        const batchPromises = uniqueIds.map(async (id: number) => {
+          const batch = await crudeTrace.batches(id);
+          const loaded = Number(batch.volumeLoaded);
+          const delivered = Number(batch.volumeDelivered);
+          return {
+             id,
+             name: `Batch ${id}`,
+             loaded,
+             delivered,
+             deficit: loaded - delivered,
+             value: ethers.formatUnits(batch.batchValue, 18),
+             status: Number(batch.status)
+          };
+        });
+
+        let validBatches = await Promise.all(batchPromises);
+        validBatches = validBatches.filter(b => b.loaded > 0).sort((a, b) => b.id - a.id); // Descending
+
+        setAllBatches(validBatches);
+        setTotalBatches(validBatches.length);
+        // Chart uses last 10 batches (reverse to chronological left-to-right)
+        setChartData([...validBatches].slice(0, 10).reverse());
+      } catch (err) {
+        console.error("Failed to fetch batches:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchDashboardData();
 
@@ -56,6 +84,19 @@ export const Dashboard = () => {
       };
     }
   }, [crudeTrace, mockUSDC]);
+
+  const filteredBatches = allBatches.filter(b => 
+    searchQuery === '' ? true : b.id.toString() === searchQuery
+  );
+
+  const getStatusBadge = (status: number) => {
+    switch (status) {
+      case 0: return <span className="px-2 py-1 bg-amber-500/20 text-amber-500 text-xs rounded-full font-medium">In Transit</span>;
+      case 1: return <span className="px-2 py-1 bg-blue-500/20 text-blue-500 text-xs rounded-full font-medium">Delivered</span>;
+      case 2: return <span className="px-2 py-1 bg-emerald-500/20 text-emerald-500 text-xs rounded-full font-medium">Settled</span>;
+      default: return <span className="px-2 py-1 bg-slate-500/20 text-slate-500 text-xs rounded-full font-medium">Unknown</span>;
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -84,7 +125,7 @@ export const Dashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400">Total Batches Processed</p>
+                <p className="text-sm font-medium text-slate-400">Total Batches Discovered</p>
                 <h3 className="text-3xl font-bold mt-2 tabular-nums">{totalBatches}</h3>
               </div>
               <div className="bg-emerald-500/10 p-3 rounded-lg">
@@ -115,20 +156,26 @@ export const Dashboard = () => {
             <CardTitle>Volume Transported (Recent Batches)</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
-                <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
-                <Tooltip 
-                  cursor={{ fill: '#334155', opacity: 0.4 }}
-                  contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                />
-                <Legend />
-                <Bar dataKey="loaded" name="Loaded (Bbl)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="delivered" name="Delivered (Bbl)" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {isLoading ? (
+               <div className="h-full flex items-center justify-center text-slate-400">Fetching live data from contract...</div>
+            ) : chartData.length === 0 ? (
+               <div className="h-full flex items-center justify-center text-slate-400">No batches logged yet. Go to Operations to simulate.</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                  <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} />
+                  <Tooltip 
+                    cursor={{ fill: '#334155', opacity: 0.4 }}
+                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                  />
+                  <Legend />
+                  <Bar dataKey="loaded" name="Loaded (Bbl)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="delivered" name="Delivered (Bbl)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -141,7 +188,7 @@ export const Dashboard = () => {
           </CardHeader>
           <CardContent className="space-y-4 max-h-80 overflow-y-auto">
             {activeAlerts.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-8">No current security alerts.</p>
+              <p className="text-slate-400 text-sm text-center py-8">No live security alerts.</p>
             ) : (
               activeAlerts.map(alert => (
                 <Alert key={alert.id} type="warning" className="flex flex-col items-start gap-1">
@@ -153,6 +200,75 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-6 border-t-4 border-t-emerald-500">
+        <CardHeader className="bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <CardTitle>Dynamic Batch Tracking Ledger</CardTitle>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Search by Batch ID..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-64"
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-900/80 text-slate-400 uppercase font-medium">
+                <tr>
+                  <th className="px-6 py-4 rounded-tl-lg">Batch ID</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Loaded (Bbl)</th>
+                  <th className="px-6 py-4">Delivered (Bbl)</th>
+                  <th className="px-6 py-4">Deficit / Missing</th>
+                  <th className="px-6 py-4">Declared Value</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400 border-none">Loading batches from chain...</td>
+                  </tr>
+                ) : filteredBatches.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center border-none">
+                      {searchQuery ? `No batch found for ID ${searchQuery}` : "No batches detected on chain."}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredBatches.map(batch => (
+                    <tr key={batch.id} className="hover:bg-slate-800/50 transition-colors group">
+                      <td className="px-6 py-4 font-mono font-medium text-white break-words">#{batch.id}</td>
+                      <td className="px-6 py-4">{getStatusBadge(batch.status)}</td>
+                      <td className="px-6 py-4 tabular-nums">{batch.loaded}</td>
+                      <td className="px-6 py-4 tabular-nums">
+                        {batch.status > 0 ? batch.delivered : <span className="text-slate-500">-</span>}
+                      </td>
+                      <td className="px-6 py-4 tabular-nums">
+                        {batch.status > 0 ? (
+                           <div className="flex items-center gap-2">
+                             <span className={batch.deficit > 0 ? 'text-amber-500 font-bold' : 'text-emerald-500'}>
+                               {batch.deficit} Bbl
+                             </span>
+                             {batch.deficit > 0 && <span className="text-xs text-slate-500">(Missing)</span>}
+                           </div>
+                        ) : (
+                           <span className="text-slate-500">Pending arrival...</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 tabular-nums">${parseFloat(batch.value).toLocaleString()}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
