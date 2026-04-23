@@ -1,0 +1,2 @@
+crude_trace_address = 0x022a41beC91e71CfF71Bb452BC157707F36aabdB
+mock_usdc_address = 0xF41dE9305229830dA261aff0ED4791BC5558d823
