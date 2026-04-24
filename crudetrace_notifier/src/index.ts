@@ -112,7 +112,7 @@ if (bot && WEBHOOK_URL) {
   // Register webhook with Telegram
   bot.setWebHook(`${WEBHOOK_URL}/bot${TELEGRAM_BOT_TOKEN}`)
     .then(() => console.log(`✅ Telegram webhook registered: ${WEBHOOK_URL}/bot${TELEGRAM_BOT_TOKEN}`))
-    .catch(err => console.error('❌ Failed to register Telegram webhook:', err));
+    .catch((err: unknown) => console.error('❌ Failed to register Telegram webhook:', err));
 
   // Receive Telegram updates via POST
   app.post(`/bot${TELEGRAM_BOT_TOKEN}`, (req, res) => {
@@ -181,7 +181,7 @@ async function sendToAllSubscribers(message: string) {
   for (const chatId of subscribers) {
     try {
       await bot.sendMessage(chatId, message);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(`❌ Failed to send to ${chatId}`, err);
     }
   }
@@ -237,7 +237,7 @@ async function start() {
     });
 
     console.log('✅ Notifier is live');
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('❌ Startup failed:', err);
     process.exit(1);
   }
