@@ -159,6 +159,72 @@ Tx: 0x1234...
 | "Telegram bot not configured" | Bot token is invalid or missing |
 | Service starts but bot fails silently | Check bot token format and validity |
 
+## Deployment to Render
+
+Deploy your notifier service to the cloud using Render:
+
+### 1. **Connect your GitHub repository to Render**
+
+- Go to [render.com](https://render.com)
+- Click "New +" → "Web Service"
+- Connect your GitHub repo (CrudeTrace)
+- Select the repository and branch
+
+### 2. **Configure the service**
+
+Set these values:
+
+- **Name**: `crudetrace-notifier`
+- **Environment**: `Node`
+- **Build Command**: `cd crudetrace_notifier && npm install`
+- **Start Command**: `cd crudetrace_notifier && npm start`
+- **Plan**: Free (or paid for production)
+
+### 3. **Set environment variables**
+
+Add these in Render dashboard under "Environment":
+
+```
+SEPOLIA_RPC_URL=https://ethereum-sepolia.publicnode.com
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+PORT=3001
+```
+
+### 4. **Deploy**
+
+Click "Create Web Service" and Render will automatically:
+- Clone your repository
+- Run build command (`npm install` + `npm run build`)
+- Start the service on a public URL
+
+### 5. **Verify deployment**
+
+Test your deployed service:
+
+```bash
+curl https://your-service-name.onrender.com/health
+```
+
+Response should be:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-04-24T...",
+  "blockchain": "Sepolia",
+  "contract": "0x022a41beC91e71CfF71Bb452BC157707F36aabdB"
+}
+```
+
+### Troubleshooting Render Deployment
+
+| Issue | Solution |
+|-------|----------|
+| Build fails with "Cannot find module" | Make sure `postinstall` script is in package.json |
+| TypeScript not compiling | Verify TypeScript is in dependencies (or devDependencies) |
+| Bot not responding | Check environment variables are set correctly |
+| Port issues | Render assigns port automatically, ensure PORT env var is set |
+
 ## Architecture
 
 ```
