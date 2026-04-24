@@ -34,6 +34,12 @@ A comprehensive blockchain-based crude oil supply chain tracking system with Web
 
 ![CrudeTrace Alert Bot](./crudetracebot.jpg)
 
+
+**See the bot in action:**
+
+![CrudeTrace Alert Bot](./crudetrace_landingpage.png)
+
+
 ### Webhook Integration
 - REST API endpoints for ERP systems
 - External monitoring tools integration
