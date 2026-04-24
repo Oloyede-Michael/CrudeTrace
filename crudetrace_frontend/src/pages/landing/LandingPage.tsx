@@ -6,6 +6,7 @@ import { HowItWorks } from './Howitworks';
 import { Stats } from './Stats';
 import { DashboardPreview } from './DashboardPreview';
 import { Testimonials } from './Testimonials';
+import { Web2Integration } from './Web2Integration';
 import { Pricing } from './Pricing';
 import { FAQ } from './FAQ';
 import { CTABanner } from './CTABanner';
@@ -24,6 +25,7 @@ export const LandingPage = () => {
         <Stats />
         <DashboardPreview />
         <Testimonials />
+        <Web2Integration />
         <Pricing />
         <FAQ />
         <CTABanner />

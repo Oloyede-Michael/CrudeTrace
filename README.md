@@ -53,6 +53,29 @@ A comprehensive blockchain-based crude oil supply chain tracking system with Web
    npm run build && npm start
    ```
 
+## For Judges 🎯
+
+**Want to experience the full CrudeTrace platform in 10 minutes?**
+
+See [JUDGING_GUIDE.md](./JUDGING_GUIDE.md) for a complete step-by-step walkthrough including:
+- How to setup and connect MetaMask
+- How to grant yourself oracle roles
+- How to create test batches
+- How to see Web2 API integration in action
+- How to receive Telegram notifications
+
+**TL;DR - Quick Commands:**
+
+```bash
+# Terminal 1: Start the frontend
+cd crudetrace_frontend && npm run dev
+
+# Terminal 2: Start the Web2 API service
+cd crudetrace_notifier && npm start
+
+# Then visit http://localhost:5173 and see the bot section on landing page
+```
+
 ## Web2 API Integration
 
 This project demonstrates **hybrid Web2-Web3 architecture** with:
