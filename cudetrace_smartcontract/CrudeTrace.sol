@@ -137,4 +137,9 @@ contract CrudeTrace is AccessControl, ReentrancyGuard, Pausable {
     // --- Admin Functions ---
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) { _pause(); }
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) { _unpause(); }
+    
+    // Function to grant admin access to another address (for testing purposes)
+    function grantAdminRole(address account) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        grantRole(DEFAULT_ADMIN_ROLE, account);
+    }
 }
