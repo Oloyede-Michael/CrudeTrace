@@ -1,5 +1,69 @@
 # CrudeTrace
 
+A comprehensive blockchain-based crude oil supply chain tracking system with Web2 API integrations for real-time notifications and enterprise connectivity.
+
+## Architecture
+
+- **Smart Contracts**: Solidity contracts deployed on Sepolia testnet
+- **Frontend**: React + Vite dashboard with MetaMask integration
+- **Web2 API Engine**: Node.js notification service with Telegram bot and webhooks
+- **Real-time Monitoring**: WebSocket streaming and event-driven notifications
+
+## Components
+
+### Core System
+- `cudetrace_smartcontract/` - Solidity contracts for supply chain logic
+- `crudetrace_frontend/` - React dashboard for operations and monitoring
+
+### Web2 API Integration ⭐
+- `crudetrace_notifier/` - **NEW**: Node.js service providing:
+  - Telegram bot for instant notifications
+  - REST webhooks for external system integration
+  - WebSocket server for real-time event streaming
+  - Blockchain event monitoring and alerting
+
+## Web2 API Features
+
+### Telegram Notifications
+- 🚨 Real-time theft alerts
+- 📦 Batch extraction notifications
+- ✅ Delivery confirmations
+- 💰 Royalty distribution updates
+
+### Webhook Integration
+- REST API endpoints for ERP systems
+- External monitoring tools integration
+- Custom alert forwarding
+
+### WebSocket Streaming
+- Real-time event broadcasting
+- Frontend live updates
+- Third-party application integration
+
+## Quick Start
+
+1. **Deploy Smart Contracts** (see contract README)
+2. **Setup Frontend** (see frontend README)
+3. **Configure Notifier Service**:
+   ```bash
+   cd crudetrace_notifier
+   npm install
+   cp .env.example .env
+   # Configure Telegram bot and RPC endpoint
+   npm run build && npm start
+   ```
+
+## Web2 API Integration
+
+This project demonstrates **hybrid Web2-Web3 architecture** with:
+
+- **Telegram Bot API**: Real-time stakeholder notifications
+- **Webhook Engine**: Enterprise system integration capabilities
+- **WebSocket Server**: Live data streaming for external applications
+- **Event-Driven Architecture**: Blockchain events trigger Web2 notifications
+
+The notifier service runs independently, monitoring the blockchain and providing traditional API interfaces for supply chain stakeholders who prefer Web2 integrations over direct blockchain interaction.
+
 CrudeTrace is an immutable Web3 supply chain tracking and automated settlement platform designed for the crude oil industry. It connects IoT terminal data directly to smart contracts to trace shipments, calculate losses, and automatically distribute royalties to stakeholders without human intervention or intermediaries.
 
 ---
