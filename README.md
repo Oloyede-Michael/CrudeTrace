@@ -35,6 +35,11 @@ A comprehensive blockchain-based crude oil supply chain tracking system with Web
 ![CrudeTrace Alert Bot](./crudetracebot.png)
 
 
+**See the bot receiving alerts:**
+
+![CrudeTrace Alert Bot](./crudetracebot2.png)
+
+
 **See the bot in action:**
 
 ![CrudeTrace Alert Bot](./crudetrace_landingpage.png)
