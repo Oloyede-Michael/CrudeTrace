@@ -12,6 +12,7 @@ const CRUDE_TRACE_ADDRESS = "0x022a41beC91e71CfF71Bb452BC157707F36aabdB";
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "";
 const SEPOLIA_RPC_FALLBACK = process.env.SEPOLIA_RPC_FALLBACK || "";
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID ? parseInt(process.env.TELEGRAM_CHAT_ID, 10) : null;
 const WEBHOOK_URL = process.env.WEBHOOK_URL || ""; // e.g. https://your-domain.com or ngrok URL
 const PORT = process.env.PORT || 3001;
 
@@ -178,11 +179,21 @@ app.get('/health', (_req, res) => {
 async function sendToAllSubscribers(message: string) {
   if (!bot) return;
 
+  // Send to all subscribers
   for (const chatId of subscribers) {
     try {
       await bot.sendMessage(chatId, message);
     } catch (err: unknown) {
       console.error(`❌ Failed to send to ${chatId}`, err);
+    }
+  }
+
+  // Also send to default chat ID from env if set
+  if (TELEGRAM_CHAT_ID) {
+    try {
+      await bot.sendMessage(TELEGRAM_CHAT_ID, message);
+    } catch (err: unknown) {
+      console.error(`❌ Failed to send to default chat ${TELEGRAM_CHAT_ID}`, err);
     }
   }
 }
